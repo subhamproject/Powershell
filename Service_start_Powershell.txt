@@ -1,0 +1,24 @@
+function FuncCheckService{
+param($ServiceName)
+$arrService = Get-Service -Name $ServiceName
+$Date = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
+$Start = "Started "
+$Started = " service is already started."
+if ($arrService.Status -ne "Running"){
+Start-Service $ServiceName
+($Date + " - " + $Start + $ServiceName) | Out-file C:\Users\submandal\serviceStart.txt -append
+}
+if ($arrService.Status -eq "Running"){ 
+($Date + " - " + $ServiceName + $Started) | Out-file C:\Users\submandal\serviceStart.txt -append
+}
+}
+
+FuncCheckService -ServiceName "spooler"
+
+
+
+-----------------------------------------------------------------
+
+
+$A = get-service ShellHWDetection 
+if ($A.Status -eq "Stopped") {$A.start()} elseIf ($A.status -eq "Running") {Write-Host -ForegroundColor Yellow $A.name "is running"}

@@ -1,0 +1,22 @@
+cls
+$abort = "jack"
+do
+{
+$name = read-host "Please enter your name?"
+if ($name)
+{
+echo "Your name is $name"
+if  ($name -eq "jack")
+{
+echo "Your guess was correct"
+}
+else
+{
+echo "Aha!!!!Your guess was wrong...Try again?"
+}
+}
+else
+{
+echo "You have enter NULL value"
+}
+} until ($abort -eq $name)

@@ -1,0 +1,6 @@
+
+Below command is to send mail to destination server
+
+Send-MailMessage -To "submandal@deloitte.com" -From "submandal@deloitte.com" -SMTPServer smtp.deloitte.com  -Subject “Daily report” -Body “This is a daily report of servers uptime”
+
+Send-MailMessage -To "submandal@deloitte.com" -From "serveradmin@deloitte.com" -SMTPServer smtp.deloitte.com  -Subject "Daily report" -Attachments C:\Users\submandal\dailyprocs.txt

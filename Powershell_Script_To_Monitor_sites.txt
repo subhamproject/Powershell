@@ -1,0 +1,80 @@
+$fromAddress = "someServer@suteki.co.uk"
+$toAddress = "mike.hadlow@suteki.co.uk"
+$subject = "One or more websites are not responding"
+$port = 587
+$monitorPassword = "s0meN1cePa33w0rd"
+
+$sites = @{
+    "suteki.shop" = "http://suteki.shop/"; 
+    "blue.shop" = "http://green.shop/"
+    }
+
+# send an email message via gmail
+function SendMessage([string]$body)
+{
+    $message = new-object System.Net.Mail.MailMessage($fromAddress, $toAddress, $subject, $body)
+    $smtpServer = "smtp.gmail.com"
+    $client = new-object System.Net.Mail.SmtpClient($smtpServer)
+    $client.EnableSsl = $TRUE
+    $client.Port = 587
+    $client.Credentials = new-object System.Net.NetworkCredential($fromAddress, $monitorPassword)
+    $client.Send($message)
+}
+
+# make a request to the site and return the status code. Return 'Failed' if anything goes wrong
+function CheckSiteStatus([string]$url)
+{
+    $req = [System.Net.HttpWebRequest]::Create($url)
+    try
+    {
+        $res = $req.GetResponse()
+        $res.StatusCode
+    }
+    catch
+    {
+        "Failed"
+    }
+}
+
+function RestartSite([string]$site)
+{
+    C:\Windows\system32\inetsrv\appcmd stop site $site
+    C:\Windows\system32\inetsrv\appcmd start site $site
+}
+
+function CheckSite([string]$url, [string]$site)
+{
+    $status = CheckSiteStatus $url
+    if ($status -eq "OK")
+    {
+        ""
+    }
+    else
+    {
+        # attempt to restart site
+        RestartSite $site
+        "site '$site' failed to respond`n"
+    }
+}
+
+function CheckSites()
+{
+    $body = ""
+    foreach($site in $sites.Keys)
+    {
+        $url = $sites[$site]
+        $body += CheckSite $url $site
+    }
+    if($body -ne "")
+    {
+        SendMessage $body
+        $body
+    }
+    else
+    {
+        "OK"
+    }
+}
+
+CheckSites
+ 

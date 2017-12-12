@@ -1,0 +1,272 @@
+#### This script will be to restart all services from the given list in multiple servers
+clear-host
+
+################### Setting Variable ####################################
+
+$Date = Get-Date -Format "MM/dd/yyyy HH:mm:ss"
+$ToMail = "submandal@deloitte.com"
+$FromMail = "Admin@deloitte.com"
+$SmtpServer = "smtp.deloitte.com"
+$Subject = "Post Patching Validation Report"
+
+################################## Logs files,Please change the log file path as applicable #############################
+
+$ServiceLogs = "C:\Users\submandal\Servicescript\ServicesRestart.log"
+$ExceptionLogs = "C:\Users\submandal\Servicescript\SrvcExceptionError.log"
+$DiskSpaceLogs = “C:\Users\submandal\Servicescript\Lowdisk.log” 
+$DiskSpaceErrLogs = "C:\Users\submandal\Servicescript\DiskSpcErr.log”
+$RepoConLogs = "C:\Users\submandal\Servicescript\RepoAccess.log"
+$RepoErrLogs = "C:\Users\submandal\Servicescript\RepoErr.log"
+
+################################ Servers,UNC Path and Services list,Please change the path as applicable ##################
+
+$ServiceList = get-content C:\Users\submandal\files\service.txt
+$ServerList = get-content C:\Users\submandal\files\server.txt
+$PathList = get-content C:\Users\submandal\files\pathlist.txt
+
+"=============================Starting execution===============================" >> $ServiceLogs
+"=============================Starting execution===============================" >> $DiskSpaceLogs
+"=============================Starting execution===============================" >> $RepoConLog 
+  
+Get-Date >> $ServiceLogs  #adding the timestamp to the log files 
+Get-Date >> $ExceptionLogs  #adding the timestamp to the log files
+Get-Date >> $DiskSpaceLogs  #adding the timestamp to the log files 
+Get-Date >> $DiskSpaceErrLogs  #adding the timestamp to the log files  
+Get-Date >> $RepoConLogs  #adding the timestamp to the log files 
+Get-Date >> $RepoErrLogs  #adding the timestamp to the log files  
+
+
+"=============================Starting execution===============================" >>  $ExceptionLogs  
+"=============================Starting execution===============================" >>  $DiskSpaceErrLogs
+"=============================Starting execution===============================" >>  $RepoErrLogs
+
+ Write-Host  "**************Loaded the machine list from C:\Users\submandal\files\server.txt**************" -ForegroundColor Yellow 
+
+############################## Function for Service Status check #############################################
+function ServiceStatusValidation 
+{
+foreach ($Computer in $ServerList)
+{
+  if ( Test-Connection $Computer -quiet)
+{
+ try
+ {
+  write-host "Script running on $Computer!" -ForegroundColor Yellow 
+  "Working on machine $Computer!" >> $ServiceLogs
+  foreach ($service in $ServiceList)
+  {
+  $Serv = Get-Service -ComputerName $Computer -name $service -ErrorAction SilentlyContinue
+
+  if ( $Serv.Name -ne $null )
+  {
+
+  #Checking the status of Service
+  switch (($Serv).status) {
+
+    Running {
+    write-host $Date,Service $Serv.Name is currently running on $Computer...Restarting! -ForegroundColor Green
+    "$Date,Service $service is currently running on $Computer...Restarting!" >> $ServiceLogs
+    Restart-Service $Serv.name
+    } 
+
+    Stopped {
+     write-host $Date,Service $Serv.name is not running currently on $Computer...Starting! -ForegroundColor Green
+    "$Date,Service  $service is not running currently on $Computer...Starting!" >> $ServiceLogs
+    start-service $Serv.Name
+    }
+                      
+    }  
+  } 
+  else
+  {
+  Write-host $Date,Service $service is not present in $Computer..Please Check if correct Service name is given! -ForegroundColor Red
+  "$Date,Service $service is not present in $Computer..Please Check if correct Service name is given!" >> $ExceptionLogs
+  echo "--------------------------------------------------------------------------------------------------" >> $ExceptionLogs
+  }
+  }
+} 
+ catch 
+        { 
+            #Catch the exception here 
+  
+            Write-host "-Exeception error on  $Computer. Check logFile more details!" -ForegroundColor Red 
+            "-Exeception error on  $Computer. Check logFile more details!">> $ServiceLogs
+  
+            #Write the server name to c:\Temp\ExceptionError.log 
+  
+            " $Computer has thrown asn error $($_.exception)" >> $ExceptionLogs
+        } 
+       }
+      
+
+else 
+    { 
+        # offline machines 
+       write-host "$Computer is offline!" -ForegroundColor Red
+        "$Date,$Computer is offline" >> $ExceptionLogs   
+  
+    } 
+    Write-Host  "-Operation completed on  $Computer!" -ForegroundColor Green 
+    "-Operation completed on  $Computer!">> $ServiceLogs 
+    echo "--------------------------------------------------------------------------------------------------"
+    echo "--------------------------------------------------------------------------------------------------" >> $ServiceLogs
+    start-sleep  5
+    }
+    }
+
+
+
+################################################################################################################################################
+
+
+########################################## 
+###        Gather Disk Information     ### 
+########################################## 
+
+ ############################################# Function for Disk Space Check ######################################## 
+
+function GetDiskFreeSpace
+{
+write-host ********************************* Starting Disk Space Util Script ********************************* -ForegroundColor Yellow
+###################### Variable Declaration ##########  
+$diskspace = "90" 
+$subject = "Disk Space Utilization > $diskspace %" 
+
+echo “ServerName        Drive     Drive Size(GB)            Free Space(GB)         Percent Free(%)” >> $DiskSpaceLogs 
+ 
+foreach ($computer in $ServerList)   
+{ 
+if ( Test-Connection $computer -quiet)
+{
+try
+ {
+  write-host "Script running on $computer!" -ForegroundColor Yellow
+  write-host "Disk space details are being fetch" -ForegroundColor green
+    $drives = Get-WmiObject -ComputerName $computer Win32_LogicalDisk | Where-Object {$_.DriveType -eq 3} 
+    foreach($drive in $drives) 
+                { 
+        $ID = $drive.DeviceID 
+        $size1 = $drive.size / 1GB 
+        $size = “{0:N0}” -f $size1 
+        $free1 = $drive.freespace / 1GB 
+        $free = “{0:N0}” -f $free1 
+        $a = $free1 / $size1 * 100 
+        $b = “{0:N0}” -f $a 
+  
+                    if ($b -le $diskspace) 
+                      { 
+                      echo "$computer            $ID         $size                     ${free}                   ${b}" >> $DiskSpaceLogs 
+                      }
+  
+    }
+    }
+    catch 
+    {
+     #Catch the exception here 
+  
+            Write-host "-Exeception error on  $computer. Check logFile more details!" -ForegroundColor Red 
+            "-Exeception error on  $computer. Check logFile more details!">> $DiskSpaceErrLogs
+  
+            "$computer has thrown asn error $($_.exception)" >> $DiskSpaceErrLogs
+            }
+            }
+   else
+   {
+    # offline machines 
+       write-host "$computer is offline!" -ForegroundColor Red
+       "$Date,$computer is offline" >> $DiskSpaceErrLogs
+   }
+   Write-Host  "-Operation completed on  $computer!" -ForegroundColor Green 
+    "-Operation completed on  $computer!">> $DiskSpaceLogs 
+    echo "--------------------------------------------------------------------------------------------------"
+    echo "--------------------------------------------------------------------------------------------------" >> $DiskSpaceLogs
+    start-sleep  5
+   }
+   }
+   
+
+################################################################################################################################################
+
+
+######################################################
+###        Check Repo If accessible From Server     ### 
+####################################################### 
+
+ ############################################# Function To Check If Repo Accessible ######################################## 
+
+ function CheckRepoConnection
+{
+write-host ***************************** Starting Repo Connectivity Checks Script ****************************** -ForegroundColor Yellow
+foreach ($computer in $ServerList)
+{
+  if ( Test-Connection $computer -quiet)
+{
+try
+ {
+         write-host "Script running on $computer!" -ForegroundColor Yellow 
+        "Working on machine $computer!" >> $RepoConLogs
+         
+          foreach ($path in $PathList)
+          {
+          if (Test-Path -path $path)
+          {
+         write-host $Date,$path is accessible from $computer -ForegroundColor Green
+         "$Date,$path is accessible from $computer" >> $RepoConLogs
+          }
+         else
+          {
+      write-host $Date,$path is not accessible from $computer -ForegroundColor Red
+     "$Date,$path is not accessible from $computer" >> $RepoErrLogs
+     echo "--------------------------------------------------------------------------------------------------" >>$RepoErrLogs
+      }
+      }
+      }
+      catch
+      {
+      #Catch the exception here 
+  
+            Write-host "-Exeception error on  $computer. Check logFile more details!" -ForegroundColor Red 
+            "-Exeception error on  $computer. Check logFile more details!">> $RepoErrLogs
+  
+            "$computer has thrown asn error $($_.exception)" >> $RepoErrLogs
+      }
+    }
+   else
+ {
+write-host Server $computer is offline.! -ForegroundColor Red
+"$computer is offline" >> $RepoErrLogs
+}
+ Write-Host  "-Operation completed on  $computer!" -ForegroundColor Green 
+    "-Operation completed on  $computer!">> $RepoConLogs 
+    echo "--------------------------------------------------------------------------------------------------"
+    echo "--------------------------------------------------------------------------------------------------" >> $RepoConLogs
+    start-sleep  5
+}
+}
+
+
+##### Calling function####################
+
+ServiceStatusValidation
+GetDiskFreeSpace
+CheckRepoConnection
+
+Write-Host  "Completed the execution.. Thank You!" -ForegroundColor Yellow 
+ 
+"=============================Execution completed===============================" >> $ServiceLogs 
+"=============================Execution completed===============================" >> $ExceptionLogs
+"=============================Execution completed===============================" >> $DiskSpaceLogs 
+"=============================Execution completed===============================" >> $DiskSpaceErrLogs
+"=============================Execution completed===============================" >> $RepoConLogs 
+"=============================Execution completed===============================" >> $RepoErrLogs
+   
+Send-MailMessage -To $ToMail -From $FromMail -SMTPServer $SmtpServer  -Subject $Subject -Body “Please Find the Attached Post Patching Validation Logs” -Attachments $ServiceLogs,$ExceptionLogs,$DiskSpaceLogs,$DiskSpaceErrLogs,$RepoConLogs,$RepoErrLogs
+
+
+######################### Clearing Logs files ##################################
+   Clear-Content $DiskSpaceLogs
+   clear-content $ServiceLogs
+   clear-content $ExceptionLogs
+   clear-content $DiskSpaceErrLogs
+   clear-content $RepoConLogs
+   clear-content $RepoErrLogs

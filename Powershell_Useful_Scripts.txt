@@ -1,0 +1,19 @@
+$result = @()
+
+$name = "BESClient"
+$servers = Get-Content C:\list.txt
+$cred = Get-Credential
+
+foreach($server in $servers) {
+  Try {
+    $s = gwmi win32_service -computername $server -credential $cred -ErrorAction Stop | ? { $_.name -eq $name }
+    $o = New-Object PSObject -Property @{ server=$server; status=$s.state }
+    $result += ,$o
+  }
+  Catch {
+    $o = New-Object PSObject -Property @{ server=$server; status=$_.Exception.message }
+    $result += ,$o
+  }
+}
+
+$result | Format-Table -AutoSize

@@ -1,0 +1,38 @@
+#############################################################################
+# AUTHOR   : sree.techblogs@gmail.com
+# COMMENTS : This script is used to set the startup mode for a given service
+#            using switch case.
+#############################################################################
+ 
+### Begin ###
+ 
+$ServiceName = Read-Host "Enter the service name: "
+ 
+if (gsv $ServiceName)
+    {
+     $Mode = Read-Host "Choose the startup Mode :
+                            1. Auto
+                            2. Manual
+                            3. Disable "
+ 
+     switch ($Mode)
+        {
+         1 {
+            Set-Service $ServiceName -StartupType Automatic
+            Write-Host "$ServiceName startup mode is set to Automatic." -BackgroundColor Green -ForegroundColor Black
+            }
+         2 {
+            Set-Service $ServiceName -StartupType Manual
+            Write-Host "$ServiceName startup mode is set to Manual." -BackgroundColor Green -ForegroundColor Black
+            }
+         3 {
+            Set-Service $ServiceName -StartupType Disabled
+            Write-Host "$ServiceName has been disabled." -BackgroundColor Yellow -ForegroundColor Black
+            }
+         default {"The mode is not valid."}
+         }
+      }
+ 
+else { Write-Host "$ServiceName is not valid." -ForegroundColor Red -BackgroundColor Gray }
+ 
+### End ###

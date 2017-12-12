@@ -1,0 +1,17 @@
+http://www.codewrecks.com/blog/index.php/2016/06/03/using-powershell-scripts-to-deploy-your-software/
+
+https://4sysops.com/archives/using-powershell-to-deploy-software/
+
+
+https://kevinmarquette.github.io/2017-03-18-Powershell-reading-and-saving-data-to-files/
+
+https://gallery.technet.microsoft.com/scriptcenter/Working-with-Files-Paths-0644d14a
+
+https://richardspowershellblog.wordpress.com/2007/08/19/powershell-and-working-with-files/
+
+http://powershell-guru.com/fastest-powershell-2-count-all-files-in-large-network-share/
+
+
+
+
+https://richardspowershellblog.wordpress.com/2007/08/19/powershell-and-working-with-files/ ---> SYTEM.IO

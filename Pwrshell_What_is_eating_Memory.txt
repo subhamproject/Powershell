@@ -1,0 +1,22 @@
+get-wmiobject WIN32_PROCESS | Sort-Object -Property ws -Descending|select -first 5|Select processname, @{Name="Mem Usage(MB)";Expression={[math]::round($_.ws / 1mb)}},@{Name="ProcessID";Expression={[String]$_.ProcessID}},@{Name="UserID";Expression={$_.getowner().user}}
+
+
+
+
+Below script will run every 30sec to check what is eating memory
+-------------------------------------------------------------------
+
+cls 
+function PROCESS_REPORT ()
+{
+do
+{
+get-wmiobject WIN32_PROCESS | Sort-Object -Property ws -Descending|select -first 5|Select processname, @{Name="Mem Usage(MB)";Expression={[int]($_.ws / 1mb)}},@{Name="ProcessID";Expression={[String]$_.ProcessID}},@{Name="UserID";Expression={$_.getowner().user}}
+echo "========================================================================="
+start-sleep -second 30
+}
+until ($infinity)
+}
+
+
+PROCESS_REPORT | tee -FilePath output.txt

@@ -1,0 +1,19 @@
+$uncServer = "\\10.11.12.124"
+$uncFullPath = "$uncServer\my\backup\folder"
+$username = "anton"
+$password = "p@ssw0rd"
+
+net use $uncServer $password /USER:$username  
+try  
+{
+#copy the backup
+Copy-Item $zipFileName $uncFullPath  
+#remove all zips older than 1 month from the unc path
+Get-ChildItem "$uncFullPath\*.zip" |? {$_.lastwritetime -le (Get-Date).AddMonths(-1)} |% {Remove-Item $_ -force }  
+}
+catch [System.Exception] {  
+WriteToLog -msg "could not copy backup to remote server... $_.Exception.Message" -type Error  
+}
+finally {  
+net use $uncServer /delete  
+}

@@ -1,0 +1,23 @@
+$service = Get-Service -Name "Jarvis - Configuration Service" -ErrorAction SilentlyContinue 
+if ($service -ne $null) 
+{
+    Stop-Service "Jarvis - Configuration Service"
+    $service.WaitForStatus("Stopped")
+}
+ 
+Write-Output 'Deleting actual directory'
+ 
+if (Test-Path $installationRoot) 
+{
+    Remove-Item $installationRoot -Recurse -Force
+}
+ 
+Write-Output "Unzipping setup file"
+Expand-WithFramework -zipFile $file.FullName -destinationFolder $installationRoot
+ 
+if ($service -eq $null) 
+{
+    Write-Output "Starting the service in $finalInstallDir\Jarvis.ConfigurationService.Host.exe"
+ 
+    &amp; "$installationRoot\Jarvis.ConfigurationService.Host.exe" install
+} 

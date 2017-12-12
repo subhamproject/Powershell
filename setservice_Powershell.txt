@@ -1,0 +1,4 @@
+http://support.risualblogs.com/blog/2011/06/13/enabledisable-a-service-via-powershell/
+
+
+http://metah.ch/blog/2012/09/how-to-change-a-service-startup-type-with-powershell/

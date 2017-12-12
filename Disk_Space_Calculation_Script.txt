@@ -1,0 +1,52 @@
+  
+########################################## 
+###        Gather Disk Information     ### 
+########################################## 
+
+################### Log files ########################
+  
+$file = “C:\Users\submandal\Servicescript\Lowdisk.txt” 
+
+###################### Variable Declaration ##########
+  
+$emailTO = “submandal@deloitte.com" 
+$emailFrom = "Admin@deloitte.com" 
+$smtpServer = "smtp.deloitte.com" 
+$diskspace = "400" 
+$subject = "No disk space <$diskspace GB"
+
+
+$Servers = Get-Content “C:\Users\submandal\files\server.txt”
+ 
+echo “ServerName        Drive     Drive Size            Free Space         Percent Free” >> $file 
+ 
+foreach ($computer in $Servers) 
+  
+{ 
+    $drives = Get-WmiObject -ComputerName $computer Win32_LogicalDisk | Where-Object {$_.DriveType -eq 3} 
+    foreach($drive in $drives) 
+                { 
+        $ID = $drive.DeviceID 
+        $size1 = $drive.size / 1GB 
+        $size = “{0:N2}” -f $size1 
+        $free1 = $drive.freespace / 1GB 
+        $free = “{0:N2}” -f $free1 
+        $a = $free1 / $size1 * 100 
+        $b = “{0:N2}” -f $a 
+  
+                               if ($free1 -gt $diskspace) 
+                               { 
+                               echo "$computer            $ID         $size                     $free                    $b" >> $file 
+                               }
+                            
+         
+  
+########################################################### 
+##    Send Notification if alert $i is greater then 0    ## 
+########################################################### 
+  
+    }
+   }
+
+   Send-MailMessage -to $user -From $emailFrom -Attachments $file -SmtpServer $smtpServer -Subject $Subject 
+   Clear-Content $file 

@@ -1,0 +1,22 @@
+$pc = "mycomputer"
+
+$disks = get-wmiobject -class "Win32_LogicalDisk" -namespace "root\CIMV2" -computername $pc
+
+$results = foreach ($disk in $disks)
+{
+    if ($disk.Size -gt 0)
+    {
+        $size = [math]::round($disk.Size/1GB, 0)
+        $free = [math]::round($disk.FreeSpace/1GB, 0)
+        [PSCustomObject]@{
+            Drive = $disk.Name
+            Name = $disk.VolumeName
+            "Total Disk Size" = $size
+            "Free Disk Size" = "{0:N0} ({1:P0})" -f $free, ($free/$size)
+        }
+    }
+}
+# Sample outputs
+$results | Out-GridView
+$results | Format-Table -AutoSize
+$results | Export-Csv -Path .\disks.csv -NoTypeInformation -Encoding ASCII
